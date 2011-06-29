@@ -121,8 +121,8 @@ public class FbDialog extends Dialog {
         //XXX Rotating to landscape on login screen put login button out of sight without ability to scroll to it. 
         // So scrollbars were enabled here. -Lance
         mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-        //mWebView.setVerticalScrollBarEnabled(false);
-        //mWebView.setHorizontalScrollBarEnabled(false);
+        mWebView.setVerticalScrollBarEnabled(true);
+        mWebView.setHorizontalScrollBarEnabled(true);
 
         mWebView.setWebViewClient(new FbDialog.FbWebViewClient());
         mWebView.getSettings().setJavaScriptEnabled(true);
@@ -148,6 +148,17 @@ public class FbDialog extends Dialog {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Log.d("Facebook-WebView", "Redirect URL: " + url);
+            
+            // WebView isn't showing anything on the stream.publish page for some reason. So show in real browser.
+            /*
+            if ( url.contains("stream.publish") ) {
+                getContext().startActivity(
+                        new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                DialogUtil.safeDismiss(FbDialog.this);
+                return true;
+            }
+             */            
+            
             if (url.startsWith(Facebook.REDIRECT_URI)) {
                 Bundle values = Util.parseUrl(url);
 
@@ -191,6 +202,21 @@ public class FbDialog extends Dialog {
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             Log.d("Facebook-WebView", "Webview loading URL: " + url);
+                            
+            //url = url.replaceAll("display=touch", "display=wap");
+            
+            //Log.d("Facebook-WebView", "Webview loading URL: " + url);
+            
+            /*
+            // WebView isn't showing anything on the stream.publish page for some reason. So show in real browser.
+            if ( url.contains("stream.publish") ) {
+                getContext().startActivity(
+                        new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                DialogUtil.safeDismiss(FbDialog.this);
+                return;
+            }
+            */
+            
             super.onPageStarted(view, url, favicon);
             DialogUtil.safeShow(mSpinner);
         }
