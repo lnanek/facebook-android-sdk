@@ -19,6 +19,7 @@ package com.facebook.android;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -29,6 +30,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.webkit.WebView;
@@ -38,6 +40,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.facebook.android.Facebook.DialogListener;
+import com.facebook.android.support.DialogUtil;
+import com.facebook.android.support.NoNPEWebView;
 
 public class FbDialog extends Dialog {
 
@@ -70,7 +74,16 @@ public class FbDialog extends Dialog {
         super.onCreate(savedInstanceState);
         mSpinner = new ProgressDialog(getContext());
         mSpinner.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        mSpinner.setMessage("Loading...");
+        // If previously saved authorization was used, user wasn't certain this was Facebook that was loading. So added name. -Lance
+        mSpinner.setMessage("Loading Facebook...");
+        // Cancel listener added to spinner to cancel posting to Facebook. 
+        // Was just dismissing spinner previously. -Lance
+        mSpinner.setOnCancelListener(new OnCancelListener() {
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				FbDialog.this.cancel();
+			}
+		});
 
         mContent = new LinearLayout(getContext());
         mContent.setOrientation(LinearLayout.VERTICAL);
@@ -87,6 +100,15 @@ public class FbDialog extends Dialog {
         addContentView(mContent, new LinearLayout.LayoutParams(
                 display.getWidth() - ((int) (dimensions[0] * scale + 0.5f)),
                 display.getHeight() - ((int) (dimensions[1] * scale + 0.5f))));
+        
+        //XXX The Facebook SDK wasn't sending anything to the listener when a dialog was left by the back button.
+        // This fixes that, allowing the calling activity to react. -Lance
+		this.setOnCancelListener(new OnCancelListener() {
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				mListener.onCancel();
+			}
+		});
     }
 
     private void setUpTitle() {
@@ -106,9 +128,14 @@ public class FbDialog extends Dialog {
     }
 
     private void setUpWebView() {
-        mWebView = new WebView(getContext());
-        mWebView.setVerticalScrollBarEnabled(false);
-        mWebView.setHorizontalScrollBarEnabled(false);
+        mWebView = new NoNPEWebView(getContext());
+        
+        //XXX Rotating to landscape on login screen put login button out of sight without ability to scroll to it. 
+        // So scrollbars were enabled here. -Lance
+        mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+        //mWebView.setVerticalScrollBarEnabled(false);
+        //mWebView.setHorizontalScrollBarEnabled(false);
+
         mWebView.setWebViewClient(new FbDialog.FbWebViewClient());
         mWebView.getSettings().setJavaScriptEnabled(true);
         mWebView.loadUrl(mUrl);
@@ -116,6 +143,18 @@ public class FbDialog extends Dialog {
         mContent.addView(mWebView);
     }
 
+	//WebView wasn't finishing loading after the dialog had been dismissed
+	//in some situations. So make sure it is stopped and doesn't callback. -Lance
+    @Override
+	protected void onStop() {
+		super.onStop();
+		if ( null != mWebView ) {
+			mWebView.setWebViewClient(new WebViewClient());
+			mWebView.stopLoading();
+		}
+		DialogUtil.safeDismiss(mSpinner);
+	}	    
+    
     private class FbWebViewClient extends WebViewClient {
 
         @Override
@@ -137,12 +176,11 @@ public class FbDialog extends Dialog {
                 } else {
                     mListener.onFacebookError(new FacebookError(error));
                 }
-
-                FbDialog.this.dismiss();
+                DialogUtil.safeDismiss(FbDialog.this);
                 return true;
             } else if (url.startsWith(Facebook.CANCEL_URI)) {
                 mListener.onCancel();
-                FbDialog.this.dismiss();
+                DialogUtil.safeDismiss(FbDialog.this);
                 return true;
             } else if (url.contains(DISPLAY_STRING)) {
                 return false;
@@ -159,14 +197,14 @@ public class FbDialog extends Dialog {
             super.onReceivedError(view, errorCode, description, failingUrl);
             mListener.onError(
                     new DialogError(description, errorCode, failingUrl));
-            FbDialog.this.dismiss();
+            DialogUtil.safeDismiss(FbDialog.this);
         }
 
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             Log.d("Facebook-WebView", "Webview loading URL: " + url);
             super.onPageStarted(view, url, favicon);
-            mSpinner.show();
+            DialogUtil.safeShow(mSpinner);
         }
 
         @Override
@@ -176,7 +214,7 @@ public class FbDialog extends Dialog {
             if (title != null && title.length() > 0) {
                 mTitle.setText(title);
             }
-            mSpinner.dismiss();
+            DialogUtil.safeDismiss(mSpinner);
         }
 
     }

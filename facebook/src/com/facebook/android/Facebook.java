@@ -680,9 +680,20 @@ public class Facebook {
      *            - duration in seconds
      */
     public void setAccessExpiresIn(String expiresIn) {
+    	/* Original code
         if (expiresIn != null && !expiresIn.equals("0")) {
             setAccessExpires(System.currentTimeMillis()
                     + Integer.parseInt(expiresIn) * 1000);
+        }
+        */
+    	// Changed to accept 0 to mean not expiring.
+        if (expiresIn != null) {
+            if (expiresIn.equals("0")) {
+                setAccessExpires(0);
+            } else { 
+                setAccessExpires(System.currentTimeMillis()
+                        + Integer.parseInt(expiresIn) * 1000);
+            }
         }
     }
 
