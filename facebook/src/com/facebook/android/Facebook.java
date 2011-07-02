@@ -600,19 +600,15 @@ public class Facebook {
             final DialogListener listener) {
 
         String endpoint = DIALOG_BASE_URL + action;
+        parameters.putString("display", "touch");
+        parameters.putString("redirect_uri", REDIRECT_URI);
 
         if (action.equals(LOGIN)) {
             parameters.putString("type", "user_agent");
             parameters.putString("client_id", mAppId);
-            parameters.putString("redirect_uri", REDIRECT_URI);
         } else {
-            // New end point was returning blank for stream.publish page.
-            endpoint = "https://www.facebook.com/connect/uiserver.php";
-            parameters.putString("method", action);
-            parameters.putString("next", REDIRECT_URI);
             parameters.putString("app_id", mAppId);
         }
-        parameters.putString("display", "touch");
 
         if (isSessionValid()) {
             parameters.putString(TOKEN, getAccessToken());

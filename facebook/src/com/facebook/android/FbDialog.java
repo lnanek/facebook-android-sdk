@@ -120,9 +120,9 @@ public class FbDialog extends Dialog {
         
         //XXX Rotating to landscape on login screen put login button out of sight without ability to scroll to it. 
         // So scrollbars were enabled here. -Lance
-        mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-        mWebView.setVerticalScrollBarEnabled(true);
-        mWebView.setHorizontalScrollBarEnabled(true);
+        mWebView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_INSET);
+        //mWebView.setVerticalScrollBarEnabled(false);
+        //mWebView.setHorizontalScrollBarEnabled(false);
 
         mWebView.setWebViewClient(new FbDialog.FbWebViewClient());
         mWebView.getSettings().setJavaScriptEnabled(true);

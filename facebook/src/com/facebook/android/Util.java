@@ -27,7 +27,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 
 import org.json.JSONException;
 import org.json.JSONObject;
